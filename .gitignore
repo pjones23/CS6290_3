@@ -1,4 +1,6 @@
-.cproject
-.project
-.settings/
-.settings/*
+*.cproject
+*.project
+*.settings/
+*.settings/*
+*.o
+sim
