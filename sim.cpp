@@ -771,7 +771,7 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 							} else {
 								EX_latch->op_valid = false;
 								EX_latch->stage_stall = false;
-								memOpsStall = true; // stop access to memory translation
+								memOpsStall = false; // stop access to memory translation
 							}
 						}
 					}
