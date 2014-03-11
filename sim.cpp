@@ -482,7 +482,7 @@ void init_structures(memory_c *main_memory) // please modify init_structures fun
 	branchpred = bpred_new((bpred_type) (KNOB(KNOB_BPRED_TYPE)->getValue()),
 	KNOB(KNOB_BPRED_HIST_LEN)->getValue()); //initialize branch predictor
 
-	dtlb = tlb_new(KNOB(KNOB_VMEM_PAGE_SIZE)->getValue()); //size is knob
+	dtlb = tlb_new(KNOB(KNOB_TLB_ENTRIES)->getValue()); //size is knob
 	TLBMSHRstall = false;
 	dcacheTLBstall = false;
 	memOpsStall = false;
@@ -526,6 +526,7 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 	if (EX_latch->op_valid == true) {
 		std::cout << "TLB MSHR stall: " << TLBMSHRstall << endl;
 		std::cout << "Mem ops stall: " << memOpsStall << endl;
+		std::cout << "TLB dcache stall: " << dcacheTLBstall << endl;
 
 		//memory translation
 		bool TLBhit = false;
@@ -533,7 +534,7 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 				&& memOpsStall == false) {
 			if ((EX_latch->op)->mem_type == MEM_LD) {
 
-				uint64_t pfn;
+				uint64_t pfn = 0;
 				uint64_t vpn = getVPN((EX_latch->op)->ld_vaddr);
 
 				if (dcacheTLBstall == false && TLBMSHRstall == false) {
@@ -541,12 +542,13 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 					if (TLBhit == TRUE) {
 						if ((EX_latch->op)->TLBmissOp == false) {
 							dtlb_hit_count++;
+							std::cout << "TLB hit: " << (EX_latch->op)->inst_id << endl;
 						}
 					} else {
 						dtlb_miss_count++;
 						(EX_latch->op)->TLBmissOp = true;
+						std::cout << "TLB miss: " << (EX_latch->op)->inst_id << endl;
 					}
-					std::cout << "TLB hit: " << TLBhit << endl;
 				} else {
 					TLBhit = false;
 				}
@@ -618,18 +620,29 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 
 			} else if ((EX_latch->op)->mem_type == MEM_ST) {
 				//replicate ld, but replace with st
-
+/*
 				uint64_t pfn;
 				uint64_t vpn = getVPN((EX_latch->op)->st_vaddr);
 
-				TLBhit = tlb_access(dtlb, vpn, 0, &pfn);
+				if (dcacheTLBstall == false && TLBMSHRstall == false) {
+					TLBhit = tlb_access(dtlb, vpn, 0, &pfn);
+					if (TLBhit == TRUE) {
+						if ((EX_latch->op)->TLBmissOp == false) {
+							dtlb_hit_count++;
+						}
+					} else {
+						dtlb_miss_count++;
+						(EX_latch->op)->TLBmissOp = true;
+					}
+					std::cout << "TLB hit: " << TLBhit << endl;
+				} else {
+					TLBhit = false;
+				}
 
 				if (TLBhit == TRUE) {
-					dtlb_hit_count++;
 					(EX_latch->op)->st_vaddr = virtualToPhysical(
 							(EX_latch->op)->st_vaddr, pfn);
 				} else { //if TLB miss
-					dtlb_miss_count++;
 					uint64_t pteaddr = getPTE((EX_latch->op)->st_vaddr);
 
 					if (mshr_full == false) {
@@ -637,28 +650,36 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 							latency_count =
 							KNOB(KNOB_DCACHE_LATENCY)->getValue();
 							EX_latch->stage_stall = true;
+							dcacheTLBstall = true;
 						}
 						latency_count--;
 						if (latency_count == 0) {
+							dcacheTLBstall = false;
 							if (dcache_access(pteaddr)) {
 								dcache_hit_count++;
 								pfn = vmem_vpn_to_pfn(vpn, 0);
 								tlb_install(dtlb, vpn, 0, pfn);
+								std::cout << "dcache hit" << endl;
 
 							} else { // if dcache miss
 								dcache_miss_count++;
+								std::cout << "dcache miss" << endl;
 								Op *dummyOp = new Op();
 								dummyOp->opcode = OP_DUMMY;
 								dummyOp->mem_type = MEM_LD;
 								dummyOp->ld_vaddr = pteaddr;
 								if (main_memory->insert_mshr(dummyOp) == true) { // try to insert into mshr
 									EX_latch->stage_stall = true; // stall until the request returns from the mshr
-									EX_latch->op_valid = false; // using this to stop execution of mem stage until request returns from the mshr
+									//EX_latch->op_valid = false; // using this to stop execution of mem stage until request returns from the mshr
 									mshr_full = false;
 									TLBMSHRstall = true;
+									std::cout << "sent to MSHR (waiting)"
+											<< endl;
 								} else {
 									EX_latch->stage_stall = true; // if mshr is full
 									mshr_full = true;
+									std::cout << "MSHR is full (waiting)"
+											<< endl;
 								}
 							}
 						}
@@ -670,17 +691,19 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 						if (main_memory->insert_mshr(dummyOp) == true) // try to insert into mshr
 								{
 							EX_latch->stage_stall = true; // stall until the request returns from the mshr
-							EX_latch->op_valid = false; // using this to stop execution of mem stage until request returns from the mshr
+							//EX_latch->op_valid = false; // using this to stop execution of mem stage until request returns from the mshr
 							mshr_full = false;
 							TLBMSHRstall = true;
+							std::cout << "sent to MSHR (waiting)" << endl;
 						} else {
 							EX_latch->stage_stall = true;	// if mshr is full
 							mshr_full = true;
+							std::cout << "MSHR is full (waiting)" << endl;
 						}
 					}
 
 				} // end tlb miss stuff for MEM_ST
-
+*/
 			} else {
 				// set to false since there was no access to the TLB and allow
 				// the lab2 code to correctly move the op to the next stage
@@ -759,12 +782,14 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 
 						memOpsStall = true; // stop access to memory translation
 					}
-				}
+				} // end stuff for MEM_LD
 			} else if ((EX_latch->op)->mem_type == MEM_ST) {
 				if (mshr_full == false) {
 					if (latency_count == 0) {
 						latency_count = KNOB(KNOB_DCACHE_LATENCY)->getValue();
 						EX_latch->stage_stall = true;
+
+						memOpsStall = true; // stop access to memory translation
 					}
 					latency_count--;
 					if (latency_count == 0) {
@@ -774,6 +799,8 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 							EX_latch->stage_stall = false;
 
 							fill_retire_queue(EX_latch->op); //not really a broadcast, just using available function
+
+							memOpsStall = false; // allows for memory translation for new op after this one gets sent through
 						} else {
 							dcache_miss_count++;
 							if (main_memory->store_store_forwarding(
@@ -784,6 +811,8 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 								EX_latch->stage_stall = false;
 
 								fill_retire_queue(EX_latch->op); //not really a broadcast, just using available function
+
+								memOpsStall = false; // allows for memory translation for new op after this one gets sent through
 							} else if (main_memory->check_piggyback(
 									EX_latch->op) == false) {
 								if (main_memory->insert_mshr(EX_latch->op)
@@ -793,13 +822,19 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 									EX_latch->stage_stall = false;
 
 									mshr_full = false;
+
+									memOpsStall = false; // allows for memory translation for new op after this one gets sent through
 								} else {
 									EX_latch->stage_stall = true; //if mshr is full
 									mshr_full = true;
+
+									memOpsStall = true; // stop access to memory translation
 								}
 							} else {
 								EX_latch->op_valid = false;
 								EX_latch->stage_stall = false;
+
+								memOpsStall = false; // allows for memory translation for new op after this one gets sent through
 							}
 						}
 					}
@@ -809,16 +844,22 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 						EX_latch->op_valid = false;
 						EX_latch->stage_stall = false;
 						mshr_full = false;
+
+						memOpsStall = false; // allows for memory translation for new op after this one gets sent through
 					} else {
 						EX_latch->stage_stall = true;	//if mshr is full
 						mshr_full = true;
+
+						memOpsStall = true; // stop access to memory translation
 					}
 				}
 			} else {
 				EX_latch->op_valid = false;
 				EX_latch->stage_stall = false;
 
-				fill_retire_queue(EX_latch->op);//not really a broadcast, just using available function
+				fill_retire_queue(EX_latch->op); //not really a broadcast, just using available function
+
+				//memOpsStall = true; // allows for memory translation for new op after this one gets sent through
 			} // if memory type is ld, st, or other
 
 		} // end if ((KNOB(KNOB_ENABLE_VMEM)->getValue() == FALSE) || (KNOB(KNOB_ENABLE_VMEM)->getValue() == FALSE && TLBhit == TRUE))
@@ -1008,26 +1049,34 @@ void fill_retire_queue(Op* op)             // NEW-LAB2
 		{                                          // NEW-LAB2
 	/* you must complete the function */                             // NEW-LAB2
 	// mem ops are done.  move the op into WB stage   // NEW-LAB2
-	MEM_latch->op_queue.push_back(op);
-	MEM_latch->op_valid = true;
+	//MEM_latch->op_queue.push_back(op);
+	//MEM_latch->op_valid = true;
 	// if conditional branch, install into the TLB
 	if (KNOB(KNOB_ENABLE_VMEM)->getValue() == TRUE) {
 		if (op->opcode == OP_DUMMY) {
-			//remove dummy op so it's not retired
-			MEM_latch->op_queue.pop_back();
-			MEM_latch->op_valid = false;
 			// insert into install TLB queue
 			TLBinstallQueue.push_back(op);
 
 			std::cout << "Returned dummy op from MSHR" << endl;
+		} else {
+			MEM_latch->op_queue.push_back(op);
+			MEM_latch->op_valid = true;
 		}
+	} else {
+		MEM_latch->op_queue.push_back(op);
+		MEM_latch->op_valid = true;
 	}
 }
 
 void installInTLB() {
 	while (!TLBinstallQueue.empty()) {
 		Op* op = TLBinstallQueue.front();
-		uint64_t vpn = getVPN((EX_latch->op)->ld_vaddr);//add for stores also
+		uint64_t vpn;
+		if ((EX_latch->op)->mem_type == MEM_LD)
+			vpn = getVPN((EX_latch->op)->ld_vaddr);	//add for stores also
+		if ((EX_latch->op)->mem_type == MEM_ST)
+			vpn = getVPN((EX_latch->op)->st_vaddr);	//add for stores also
+
 		uint64_t pfn = vmem_vpn_to_pfn(vpn, 0);
 		tlb_install(dtlb, vpn, 0, pfn);
 		TLBinstallQueue.pop_front();
@@ -1049,7 +1098,8 @@ bool pipeline_latches_empty() {
 }
 
 uint64_t virtualToPhysical(ADDRINT vaddr, uint64_t pfn) {
-	uint64_t paddr = pfn*(KNOB(KNOB_VMEM_PAGE_SIZE)->getValue()) + vaddr%(KNOB(KNOB_VMEM_PAGE_SIZE)->getValue());
+	uint64_t paddr = pfn * (KNOB(KNOB_VMEM_PAGE_SIZE)->getValue())
+			+ vaddr % (KNOB(KNOB_VMEM_PAGE_SIZE)->getValue());
 	return paddr;
 }
 
