@@ -37,7 +37,8 @@ enum Op_code_num{
   OP_FDIV,      // floating point divide    
   OP_FCMP,      // floating point compare   
   OP_FBIT,      // floating point bit       
-  OP_FCMO,      // floating point cond move 
+  OP_FCMO,      // floating point cond move
+  OP_DUMMY,		// dummy opcode
   NUM_OP_TYPE
 };
 
@@ -101,6 +102,7 @@ typedef struct Op_struct : public Trace_op{
   bool valid;
   /* when you add new element, you must change the init_op function also */ 
   bool mispredictedBranch;
+  bool TLBmemreq;
 } Op; 
 
 
