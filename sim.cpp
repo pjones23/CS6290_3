@@ -127,7 +127,7 @@ void init_op(Op *op) {
 	op->valid = FALSE;
 	/* you might add more features here */
 	op->mispredictedBranch = FALSE;
-	op->TLBmemreq = FALSE;
+	op->TLBmissOp = false;
 }
 
 void init_op_pool(void) {
@@ -539,9 +539,12 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 				if (dcacheTLBstall == false && TLBMSHRstall == false) {
 					TLBhit = tlb_access(dtlb, vpn, 0, &pfn);
 					if (TLBhit == TRUE) {
-						dtlb_hit_count++;
+						if ((EX_latch->op)->TLBmissOp == false) {
+							dtlb_hit_count++;
+						}
 					} else {
 						dtlb_miss_count++;
+						(EX_latch->op)->TLBmissOp = true;
 					}
 					std::cout << "TLB hit: " << TLBhit << endl;
 				} else {
@@ -1046,15 +1049,7 @@ bool pipeline_latches_empty() {
 }
 
 uint64_t virtualToPhysical(ADDRINT vaddr, uint64_t pfn) {
-	uint64_t pageOffsetsize = LOG2(KNOB(KNOB_VMEM_PAGE_SIZE)->getValue());
-	uint64_t mask = 0;
-	for (int i = 0; i < pageOffsetsize; i++) {
-		mask = mask << 1;
-		mask = mask or 1;
-	}
-	uint64_t paddr = vaddr and mask;
-	uint64_t shiftedpfn = pfn << pageOffsetsize;
-	paddr = shiftedpfn or paddr;
+	uint64_t paddr = pfn*(KNOB(KNOB_VMEM_PAGE_SIZE)->getValue()) + vaddr%(KNOB(KNOB_VMEM_PAGE_SIZE)->getValue());
 	return paddr;
 }
 

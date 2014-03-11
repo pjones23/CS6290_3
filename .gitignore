@@ -4,6 +4,7 @@
 *.settings/*
 *.o
 *.txt
+*.out
 *.pzip
 *.sh
 sim

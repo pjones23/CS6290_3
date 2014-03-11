@@ -102,7 +102,7 @@ typedef struct Op_struct : public Trace_op{
   bool valid;
   /* when you add new element, you must change the init_op function also */ 
   bool mispredictedBranch;
-  bool TLBmemreq;
+  bool TLBmissOp;
 } Op; 
 
 
