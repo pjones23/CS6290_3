@@ -173,7 +173,7 @@ void bpred_gshare_init(bpred *b) {
 int bpred_gshare_access(bpred *b, unsigned int pc) {
 
 	//update pht
-	int pht_index = pc xor b->ghr;
+	int pht_index = pc ^ b->ghr;
 	pht_index = pht_index % (b->pht_entries);
 
 	int pht_ctr = b->pht[pht_index];
@@ -190,21 +190,21 @@ int bpred_gshare_access(bpred *b, unsigned int pc) {
 
 void bpred_gshare_update(bpred *b, unsigned int pc, int pred_dir,
 		int resolve_dir) {
-	int branchPredMask = b->hist_len;
-	branchPredMask  = 1 << b->hist_len;
+
+	//update pht
+	int pht_index = pc ^ b->ghr;
+	pht_index = pht_index % (b->pht_entries);
+	int pht_ctr = b->pht[pht_index];
+	int new_pht_ctr;
+
+	int branchPredMask = 1 << b->hist_len;
 	//update ghr
 	//bit shift ghr
 	b->ghr = b->ghr << 1;
 	//or with actually taken value (resolve_dir) to update ghr
-	b->ghr = b->ghr or resolve_dir;
+	b->ghr = b->ghr | resolve_dir;
 	//mask to keep correct value
 	b->ghr = b->ghr % branchPredMask;
-
-	//update pht
-	int pht_index = pc xor b->ghr;
-	pht_index = pht_index % (b->pht_entries);
-	int pht_ctr = b->pht[pht_index];
-	int new_pht_ctr;
 
 	if (resolve_dir == 1) {
 		new_pht_ctr = BPRED_SAT_INC(pht_ctr, BPRED_PHT_CTR_MAX);

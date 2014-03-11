@@ -542,12 +542,14 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 					if (TLBhit == TRUE) {
 						if ((EX_latch->op)->TLBmissOp == false) {
 							dtlb_hit_count++;
-							std::cout << "TLB hit: " << (EX_latch->op)->inst_id << endl;
+							std::cout << "TLB hit: inst_id "
+									<< (EX_latch->op)->inst_id << endl;
 						}
 					} else {
 						dtlb_miss_count++;
 						(EX_latch->op)->TLBmissOp = true;
-						std::cout << "TLB miss: " << (EX_latch->op)->inst_id << endl;
+						std::cout << "TLB miss: inst_id "
+								<< (EX_latch->op)->inst_id << endl;
 					}
 				} else {
 					TLBhit = false;
@@ -620,8 +622,8 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 
 			} else if ((EX_latch->op)->mem_type == MEM_ST) {
 				//replicate ld, but replace with st
-/*
-				uint64_t pfn;
+
+				uint64_t pfn = 0;
 				uint64_t vpn = getVPN((EX_latch->op)->st_vaddr);
 
 				if (dcacheTLBstall == false && TLBMSHRstall == false) {
@@ -629,12 +631,15 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 					if (TLBhit == TRUE) {
 						if ((EX_latch->op)->TLBmissOp == false) {
 							dtlb_hit_count++;
+							std::cout << "TLB hit: " << (EX_latch->op)->inst_id
+									<< endl;
 						}
 					} else {
 						dtlb_miss_count++;
 						(EX_latch->op)->TLBmissOp = true;
+						std::cout << "TLB miss: " << (EX_latch->op)->inst_id
+								<< endl;
 					}
-					std::cout << "TLB hit: " << TLBhit << endl;
 				} else {
 					TLBhit = false;
 				}
@@ -703,7 +708,7 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 					}
 
 				} // end tlb miss stuff for MEM_ST
-*/
+
 			} else {
 				// set to false since there was no access to the TLB and allow
 				// the lab2 code to correctly move the op to the next stage
@@ -714,7 +719,9 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 		// memory operations
 		if ((KNOB(KNOB_ENABLE_VMEM)->getValue() == FALSE)
 				|| (KNOB(KNOB_ENABLE_VMEM)->getValue() == TRUE && TLBhit == TRUE
-						&& TLBMSHRstall == false) || (memOpsStall == true)) {
+						&& TLBMSHRstall == false)
+				|| (KNOB(KNOB_ENABLE_VMEM)->getValue() == TRUE
+						&& memOpsStall == true)) {
 
 			/* Do everything*/
 			if ((EX_latch->op)->mem_type == MEM_LD) {
@@ -961,7 +968,7 @@ void FE_stage() {
 				{
 			// check if using branch predictor
 			if (KNOB(KNOB_USE_BPRED)->getValue() == TRUE) {
-				if (new_op->cf_type == CF_CBR) {
+				if (new_op->cf_type == CF_CBR && new_op->opcode == OP_CF) {
 					//access branch predictor
 					int branPredDir = bpred_access(branchpred,
 							new_op->instruction_addr);
@@ -980,7 +987,7 @@ void FE_stage() {
 
 					//update branch predictor
 					bpred_update(branchpred, new_op->instruction_addr,
-							new_op->actually_taken, branPredDir);
+							branPredDir, new_op->actually_taken);
 
 				}
 			}
