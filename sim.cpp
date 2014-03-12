@@ -524,9 +524,9 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 	static int latency_count;
 	static bool mshr_full = false;
 	if (EX_latch->op_valid == true) {
-		std::cout << "TLB MSHR stall: " << TLBMSHRstall << endl;
-		std::cout << "Mem ops stall: " << memOpsStall << endl;
-		std::cout << "TLB dcache stall: " << dcacheTLBstall << endl;
+		//std::cout << "TLB MSHR stall: " << TLBMSHRstall << endl;
+		//std::cout << "Mem ops stall: " << memOpsStall << endl;
+		//std::cout << "TLB dcache stall: " << dcacheTLBstall << endl;
 
 		//memory translation
 		bool TLBhit = false;
@@ -542,14 +542,14 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 					if (TLBhit == TRUE) {
 						if ((EX_latch->op)->TLBmissOp == false) {
 							dtlb_hit_count++;
-							std::cout << "TLB hit: inst_id "
-									<< (EX_latch->op)->inst_id << endl;
+							//std::cout << "TLB hit: inst_id "
+								//	<< (EX_latch->op)->inst_id << endl;
 						}
 					} else {
 						dtlb_miss_count++;
 						(EX_latch->op)->TLBmissOp = true;
-						std::cout << "TLB miss: inst_id "
-								<< (EX_latch->op)->inst_id << endl;
+						//std::cout << "TLB miss: inst_id "
+							//	<< (EX_latch->op)->inst_id << endl;
 					}
 				} else {
 					TLBhit = false;
@@ -575,11 +575,11 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 								dcache_hit_count++;
 								pfn = vmem_vpn_to_pfn(vpn, 0);
 								tlb_install(dtlb, vpn, 0, pfn);
-								std::cout << "dcache hit" << endl;
+								//std::cout << "dcache hit" << endl;
 
 							} else { // if dcache miss
 								dcache_miss_count++;
-								std::cout << "dcache miss" << endl;
+								//std::cout << "dcache miss" << endl;
 								Op *dummyOp = new Op();
 								dummyOp->opcode = OP_DUMMY;
 								dummyOp->mem_type = MEM_LD;
@@ -589,13 +589,13 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 									//EX_latch->op_valid = false; // using this to stop execution of mem stage until request returns from the mshr
 									mshr_full = false;
 									TLBMSHRstall = true;
-									std::cout << "sent to MSHR (waiting)"
-											<< endl;
+									//std::cout << "sent to MSHR (waiting)"
+										//	<< endl;
 								} else {
 									EX_latch->stage_stall = true; // if mshr is full
 									mshr_full = true;
-									std::cout << "MSHR is full (waiting)"
-											<< endl;
+									//std::cout << "MSHR is full (waiting)"
+										//	<< endl;
 								}
 							}
 						}
@@ -610,11 +610,11 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 							//EX_latch->op_valid = false; // using this to stop execution of mem stage until request returns from the mshr
 							mshr_full = false;
 							TLBMSHRstall = true;
-							std::cout << "sent to MSHR (waiting)" << endl;
+							//std::cout << "sent to MSHR (waiting)" << endl;
 						} else {
 							EX_latch->stage_stall = true;	// if mshr is full
 							mshr_full = true;
-							std::cout << "MSHR is full (waiting)" << endl;
+							//std::cout << "MSHR is full (waiting)" << endl;
 						}
 					}
 
@@ -631,14 +631,14 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 					if (TLBhit == TRUE) {
 						if ((EX_latch->op)->TLBmissOp == false) {
 							dtlb_hit_count++;
-							std::cout << "TLB hit: " << (EX_latch->op)->inst_id
-									<< endl;
+							//std::cout << "TLB hit: " << (EX_latch->op)->inst_id
+								//	<< endl;
 						}
 					} else {
 						dtlb_miss_count++;
 						(EX_latch->op)->TLBmissOp = true;
-						std::cout << "TLB miss: " << (EX_latch->op)->inst_id
-								<< endl;
+						//std::cout << "TLB miss: " << (EX_latch->op)->inst_id
+							//	<< endl;
 					}
 				} else {
 					TLBhit = false;
@@ -664,11 +664,11 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 								dcache_hit_count++;
 								pfn = vmem_vpn_to_pfn(vpn, 0);
 								tlb_install(dtlb, vpn, 0, pfn);
-								std::cout << "dcache hit" << endl;
+								//std::cout << "dcache hit" << endl;
 
 							} else { // if dcache miss
 								dcache_miss_count++;
-								std::cout << "dcache miss" << endl;
+								//std::cout << "dcache miss" << endl;
 								Op *dummyOp = new Op();
 								dummyOp->opcode = OP_DUMMY;
 								dummyOp->mem_type = MEM_LD;
@@ -678,13 +678,13 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 									//EX_latch->op_valid = false; // using this to stop execution of mem stage until request returns from the mshr
 									mshr_full = false;
 									TLBMSHRstall = true;
-									std::cout << "sent to MSHR (waiting)"
-											<< endl;
+									//std::cout << "sent to MSHR (waiting)"
+										//	<< endl;
 								} else {
 									EX_latch->stage_stall = true; // if mshr is full
 									mshr_full = true;
-									std::cout << "MSHR is full (waiting)"
-											<< endl;
+									//std::cout << "MSHR is full (waiting)"
+										//	<< endl;
 								}
 							}
 						}
@@ -699,11 +699,11 @@ void MEM_stage(memory_c *main_memory) // please modify MEM_stage function argume
 							//EX_latch->op_valid = false; // using this to stop execution of mem stage until request returns from the mshr
 							mshr_full = false;
 							TLBMSHRstall = true;
-							std::cout << "sent to MSHR (waiting)" << endl;
+							//std::cout << "sent to MSHR (waiting)" << endl;
 						} else {
 							EX_latch->stage_stall = true;	// if mshr is full
 							mshr_full = true;
-							std::cout << "MSHR is full (waiting)" << endl;
+							//std::cout << "MSHR is full (waiting)" << endl;
 						}
 					}
 
@@ -979,10 +979,10 @@ void FE_stage() {
 						//stall pipeline
 						FE_latch->stage_stall = true;
 						bpred_mispred_count++;
-						std::cout << "Misprediction" << endl;
+						//std::cout << "Misprediction" << endl;
 					} else {
 						bpred_okpred_count++;
-						std::cout << "OK prediction" << endl;
+						//std::cout << "OK prediction" << endl;
 					}
 
 					//update branch predictor
@@ -1064,7 +1064,7 @@ void fill_retire_queue(Op* op)             // NEW-LAB2
 			// insert into install TLB queue
 			TLBinstallQueue.push_back(op);
 
-			std::cout << "Returned dummy op from MSHR" << endl;
+			//std::cout << "Returned dummy op from MSHR" << endl;
 		} else {
 			MEM_latch->op_queue.push_back(op);
 			MEM_latch->op_valid = true;
@@ -1091,7 +1091,7 @@ void installInTLB() {
 		EX_latch->stage_stall = false;
 		EX_latch->op_valid = true;
 		TLBMSHRstall = false;
-		std::cout << "installed " << op->inst_id << " into TLB" << endl;
+		//std::cout << "installed " << op->inst_id << " into TLB" << endl;
 	}
 
 }

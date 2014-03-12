@@ -46,8 +46,8 @@ bool tlb_access(tlb *t, uint64_t vpn, int threadid, uint64_t *pfn) {
 		t->s_miss++;
 	}
 
-	std::cout << "vpn: " << vpn << std::endl;
-	std::cout << "pfn: " << *pfn << std::endl;
+	//std::cout << "vpn: " << vpn << std::endl;
+	//std::cout << "pfn: " << *pfn << std::endl;
 
 	return found;
 }
@@ -81,8 +81,8 @@ void tlb_install(tlb *t, uint64_t vpn, int threadid, uint64_t pfn) {
 
 	t->s_access++;
 
-	std::cout << "vpn: " << vpn << std::endl;
-	std::cout << "pfn: " << pfn << std::endl;
+	//std::cout << "vpn: " << vpn << std::endl;
+	//std::cout << "pfn: " << pfn << std::endl;
 
 }
 
